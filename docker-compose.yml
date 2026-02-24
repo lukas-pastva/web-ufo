@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web-ufo:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_USER=ufo
+      - DB_PASSWORD=secret
+      - DB_NAME=ufo
+      - NODE_ENV=production
+      - PORT=3000
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:10.11
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootsecret
+      - MYSQL_DATABASE=ufo
+      - MYSQL_USER=ufo
+      - MYSQL_PASSWORD=secret
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:
