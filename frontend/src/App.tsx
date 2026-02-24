@@ -155,30 +155,36 @@ function App() {
 
       <section className="history-section">
         <h2>Signal History</h2>
-        <div className="history-table-wrap">
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Random String</th>
-                <th>Entropy</th>
-                <th>Chi²</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((gen) => (
-                <tr key={gen.id} className={gen.anomaly ? 'anomaly-row' : ''}>
-                  <td className="time-col">{formatDate(gen.generatedAt)}</td>
-                  <td className="string-col">{gen.randomString}</td>
-                  <td>{gen.entropy?.toFixed(3)}</td>
-                  <td>{gen.chiSquared?.toFixed(3)}</td>
-                  <td>{gen.anomaly ? <span className="anomaly-badge">ANOMALY</span> : <span className="normal-badge">Normal</span>}</td>
+        {history.length === 0 ? (
+          <div className="history-table-wrap">
+            <div className="history-empty">No signals generated yet. The first signal will appear within 60 seconds.</div>
+          </div>
+        ) : (
+          <div className="history-table-wrap">
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Random String</th>
+                  <th>Entropy</th>
+                  <th>Chi²</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {history.map((gen) => (
+                  <tr key={gen.id} className={gen.anomaly ? 'anomaly-row' : ''}>
+                    <td className="time-col">{formatDate(gen.generatedAt)}</td>
+                    <td className="string-col">{gen.randomString}</td>
+                    <td>{gen.entropy?.toFixed(3)}</td>
+                    <td>{gen.chiSquared?.toFixed(3)}</td>
+                    <td>{gen.anomaly ? <span className="anomaly-badge">ANOMALY</span> : <span className="normal-badge">Normal</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <footer className="footer">

@@ -96,6 +96,7 @@
 
 .current-string-container {
   flex: 1;
+  min-width: 0;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -103,6 +104,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  overflow: hidden;
 }
 
 .current-label {
@@ -115,12 +117,15 @@
 
 .current-string {
   font-family: var(--font-mono);
-  font-size: 1.8rem;
+  font-size: clamp(0.9rem, 2.5vw, 1.8rem);
   color: var(--accent);
   text-shadow: var(--glow);
   letter-spacing: 0.15em;
   word-break: break-all;
   line-height: 1.4;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .current-meta {
@@ -242,9 +247,24 @@
 
 .history-table-wrap {
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 500px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 12px;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.history-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .history-table {
@@ -280,11 +300,21 @@
 }
 
 .anomaly-row {
-  background: var(--anomaly-dim) !important;
+  background: rgba(255, 68, 102, 0.15) !important;
+  border-left: 3px solid var(--anomaly);
+}
+
+.anomaly-row td {
+  color: var(--anomaly) !important;
+  font-weight: 600;
+}
+
+.anomaly-row .string-col {
+  color: #ff6688 !important;
 }
 
 .anomaly-row:hover {
-  background: rgba(255, 68, 102, 0.12) !important;
+  background: rgba(255, 68, 102, 0.25) !important;
 }
 
 .time-col {
