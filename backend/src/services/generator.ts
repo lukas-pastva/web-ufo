@@ -70,7 +70,8 @@ export async function generateRandomString(): Promise<Generation> {
 
 export async function getLatestGeneration(): Promise<Generation | null> {
   const repo = AppDataSource.getRepository(Generation);
-  return repo.findOne({ order: { generatedAt: 'DESC' } });
+  const results = await repo.find({ order: { generatedAt: 'DESC' }, take: 1 });
+  return results.length > 0 ? results[0] : null;
 }
 
 export async function getGenerations(limit: number = 100, offset: number = 0) {

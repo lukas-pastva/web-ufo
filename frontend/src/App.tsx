@@ -12,10 +12,14 @@ function App() {
 
   const loadData = useCallback(async () => {
     try {
-      const [curr, hist, st] = await Promise.all([fetchCurrent(), fetchHistory(50), fetchStats()]);
-      setCurrent(curr);
-      setHistory(hist.items);
-      setStats(st);
+      const [currResult, histResult, stResult] = await Promise.allSettled([
+        fetchCurrent(),
+        fetchHistory(50),
+        fetchStats(),
+      ]);
+      if (currResult.status === 'fulfilled') setCurrent(currResult.value);
+      if (histResult.status === 'fulfilled') setHistory(histResult.value.items);
+      if (stResult.status === 'fulfilled') setStats(stResult.value);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
