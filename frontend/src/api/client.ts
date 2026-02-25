@@ -33,7 +33,7 @@ export interface Stats {
 
 export const fetchCurrent = () => api.get<Generation>('/generations/current').then((r) => r.data);
 
-export const fetchHistory = (limit = 100, offset = 0) =>
-  api.get<GenerationHistory>('/generations/history', { params: { limit, offset } }).then((r) => r.data);
+export const fetchHistory = (limit = 100, offset = 0, anomalyOnly = false) =>
+  api.get<GenerationHistory>('/generations/history', { params: { limit, offset, anomalyOnly } }).then((r) => r.data);
 
 export const fetchStats = () => api.get<Stats>('/generations/stats').then((r) => r.data);

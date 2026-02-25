@@ -17,7 +17,8 @@ router.get('/history', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit as string) || 100;
     const offset = parseInt(req.query.offset as string) || 0;
-    const result = await getGenerations(limit, offset);
+    const anomalyOnly = req.query.anomalyOnly === 'true';
+    const result = await getGenerations(limit, offset, anomalyOnly);
     res.json(result);
   } catch (error) {
     console.error('Error fetching history:', error);

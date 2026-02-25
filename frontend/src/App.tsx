@@ -20,7 +20,7 @@ function App() {
     try {
       const [currResult, histResult, stResult] = await Promise.allSettled([
         fetchCurrent(),
-        fetchHistory(50),
+        fetchHistory(50, 0, anomalyOnly),
         fetchStats(),
       ]);
       if (currResult.status === 'fulfilled') setCurrent(currResult.value);
@@ -31,7 +31,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [anomalyOnly]);
 
   useEffect(() => {
     loadData();
@@ -75,7 +75,7 @@ function App() {
     sortField === field ? (sortDir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
 
   const filteredHistory = useMemo(() => {
-    let data = anomalyOnly ? history.filter((g) => g.anomaly) : [...history];
+    let data = [...history];
     data.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -95,7 +95,7 @@ function App() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return data;
-  }, [history, anomalyOnly, sortField, sortDir]);
+  }, [history, sortField, sortDir]);
 
   if (loading) {
     return (

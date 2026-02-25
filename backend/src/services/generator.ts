@@ -74,9 +74,11 @@ export async function getLatestGeneration(): Promise<Generation | null> {
   return results.length > 0 ? results[0] : null;
 }
 
-export async function getGenerations(limit: number = 100, offset: number = 0) {
+export async function getGenerations(limit: number = 100, offset: number = 0, anomalyOnly: boolean = false) {
   const repo = AppDataSource.getRepository(Generation);
+  const where = anomalyOnly ? { anomaly: true } : {};
   const [items, total] = await repo.findAndCount({
+    where,
     order: { generatedAt: 'DESC' },
     take: limit,
     skip: offset,
