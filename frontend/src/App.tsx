@@ -228,8 +228,8 @@ function App() {
                       dataKey="date"
                       tick={{ fill: '#606070', fontSize: 11 }}
                       tickFormatter={(v: string) => {
-                        const d = new Date(v + 'T00:00:00');
-                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                        const d = new Date(v);
+                        return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
                       }}
                     />
                     <YAxis tick={{ fill: '#606070', fontSize: 11 }} allowDecimals={false} />
@@ -237,8 +237,8 @@ function App() {
                       contentStyle={{ background: '#12121a', border: '1px solid #2a2a3a', borderRadius: 8, fontSize: 13 }}
                       labelStyle={{ color: '#a0a0b0' }}
                       labelFormatter={(v: string) => {
-                        const d = new Date(v + 'T00:00:00');
-                        return d.toLocaleDateString('en-GB');
+                        const d = new Date(v);
+                        return d.toLocaleDateString('en-GB', { timeZone: 'UTC' });
                       }}
                     />
                     <Bar dataKey="anomalies" name="Anomalies" fill="#ff4466" radius={[3, 3, 0, 0]} />
