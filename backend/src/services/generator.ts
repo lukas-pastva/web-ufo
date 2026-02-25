@@ -107,7 +107,7 @@ export async function getChartData() {
   });
 
   return {
-    daily: daily.map((d) => ({
+    daily: daily.map((d: any) => ({
       date: d.date,
       total: parseInt(d.total),
       anomalies: parseInt(d.anomalies),
