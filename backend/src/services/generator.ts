@@ -86,6 +86,42 @@ export async function getGenerations(limit: number = 100, offset: number = 0, an
   return { items, total };
 }
 
+export async function getChartData() {
+  const repo = AppDataSource.getRepository(Generation);
+
+  const daily = await repo
+    .createQueryBuilder('g')
+    .select('DATE(g.generatedAt)', 'date')
+    .addSelect('COUNT(*)', 'total')
+    .addSelect('SUM(CASE WHEN g.anomaly = 1 THEN 1 ELSE 0 END)', 'anomalies')
+    .addSelect('AVG(g.chiSquared)', 'avgChiSquared')
+    .addSelect('AVG(g.entropy)', 'avgEntropy')
+    .groupBy('DATE(g.generatedAt)')
+    .orderBy('DATE(g.generatedAt)', 'ASC')
+    .getRawMany();
+
+  const anomalies = await repo.find({
+    where: { anomaly: true },
+    order: { generatedAt: 'ASC' },
+    select: ['id', 'generatedAt', 'chiSquared', 'entropy'],
+  });
+
+  return {
+    daily: daily.map((d) => ({
+      date: d.date,
+      total: parseInt(d.total),
+      anomalies: parseInt(d.anomalies),
+      avgChiSquared: parseFloat(d.avgChiSquared),
+      avgEntropy: parseFloat(d.avgEntropy),
+    })),
+    anomalies: anomalies.map((a) => ({
+      generatedAt: a.generatedAt,
+      chiSquared: a.chiSquared,
+      entropy: a.entropy,
+    })),
+  };
+}
+
 export async function getStats() {
   const repo = AppDataSource.getRepository(Generation);
   const total = await repo.count();

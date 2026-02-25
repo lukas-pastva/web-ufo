@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { fetchCurrent, fetchHistory, fetchStats } from './api/client';
-import type { Generation, Stats } from './api/client';
+import { fetchCurrent, fetchHistory, fetchStats, fetchChartData } from './api/client';
+import type { Generation, Stats, ChartData } from './api/client';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ScatterChart,
+  Scatter,
+  ReferenceLine,
+  Cell,
+} from 'recharts';
 import './styles/App.css';
 
 type SortField = 'generatedAt' | 'entropy' | 'chiSquared' | 'anomaly';
@@ -10,6 +23,7 @@ function App() {
   const [current, setCurrent] = useState<Generation | null>(null);
   const [history, setHistory] = useState<Generation[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(true);
   const [anomalyOnly, setAnomalyOnly] = useState(false);
@@ -18,14 +32,16 @@ function App() {
 
   const loadData = useCallback(async () => {
     try {
-      const [currResult, histResult, stResult] = await Promise.allSettled([
+      const [currResult, histResult, stResult, chartResult] = await Promise.allSettled([
         fetchCurrent(),
         fetchHistory(50, 0, anomalyOnly),
         fetchStats(),
+        fetchChartData(),
       ]);
       if (currResult.status === 'fulfilled') setCurrent(currResult.value);
       if (histResult.status === 'fulfilled') setHistory(histResult.value.items);
       if (stResult.status === 'fulfilled') setStats(stResult.value);
+      if (chartResult.status === 'fulfilled') setChartData(chartResult.value);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -194,6 +210,82 @@ function App() {
               </div>
               <div className="stat-label">Entropy Range</div>
             </div>
+          </div>
+        </section>
+      )}
+
+      {chartData && (chartData.daily.length > 0 || chartData.anomalies.length > 0) && (
+        <section className="charts-section">
+          <h2>Anomaly Charts</h2>
+          <div className="charts-grid">
+            {chartData.daily.length > 0 && (
+              <div className="chart-card">
+                <h3>Daily Anomaly Count</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={chartData.daily} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a28" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fill: '#606070', fontSize: 11 }}
+                      tickFormatter={(v: string) => {
+                        const d = new Date(v + 'T00:00:00');
+                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis tick={{ fill: '#606070', fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{ background: '#12121a', border: '1px solid #2a2a3a', borderRadius: 8, fontSize: 13 }}
+                      labelStyle={{ color: '#a0a0b0' }}
+                      labelFormatter={(v: string) => {
+                        const d = new Date(v + 'T00:00:00');
+                        return d.toLocaleDateString('en-GB');
+                      }}
+                    />
+                    <Bar dataKey="anomalies" name="Anomalies" fill="#ff4466" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {chartData.anomalies.length > 0 && (
+              <div className="chart-card">
+                <h3>Chi² Values of Anomalies</h3>
+                <ResponsiveContainer width="100%" height={280}>
+                  <ScatterChart margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1a1a28" />
+                    <XAxis
+                      dataKey="time"
+                      type="number"
+                      domain={['dataMin', 'dataMax']}
+                      tick={{ fill: '#606070', fontSize: 11 }}
+                      tickFormatter={(v: number) => {
+                        const d = new Date(v);
+                        return `${d.getDate()}/${d.getMonth() + 1}`;
+                      }}
+                    />
+                    <YAxis dataKey="chiSquared" tick={{ fill: '#606070', fontSize: 11 }} name="Chi²" />
+                    <Tooltip
+                      contentStyle={{ background: '#12121a', border: '1px solid #2a2a3a', borderRadius: 8, fontSize: 13 }}
+                      labelFormatter={(v: number) => new Date(v).toLocaleString('en-GB')}
+                      formatter={(value: number) => [value.toFixed(3), 'Chi²']}
+                    />
+                    <ReferenceLine y={30} stroke="#ff4466" strokeDasharray="6 3" label={{ value: 'Upper threshold (30)', fill: '#ff4466', fontSize: 11, position: 'insideTopRight' }} />
+                    <ReferenceLine y={5} stroke="#ff4466" strokeDasharray="6 3" label={{ value: 'Lower threshold (5)', fill: '#ff4466', fontSize: 11, position: 'insideBottomRight' }} />
+                    <ReferenceLine y={15} stroke="#00ff8844" strokeDasharray="3 3" label={{ value: 'Expected (15)', fill: '#00ff8866', fontSize: 11, position: 'insideTopRight' }} />
+                    <Scatter
+                      data={chartData.anomalies.map((a) => ({
+                        time: new Date(a.generatedAt).getTime(),
+                        chiSquared: a.chiSquared,
+                      }))}
+                    >
+                      {chartData.anomalies.map((a, i) => (
+                        <Cell key={i} fill={a.chiSquared > 30 ? '#ff4466' : '#ffaa33'} />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
         </section>
       )}

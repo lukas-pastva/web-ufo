@@ -36,4 +36,25 @@ export const fetchCurrent = () => api.get<Generation>('/generations/current').th
 export const fetchHistory = (limit = 100, offset = 0, anomalyOnly = false) =>
   api.get<GenerationHistory>('/generations/history', { params: { limit, offset, anomalyOnly } }).then((r) => r.data);
 
+export interface ChartDaily {
+  date: string;
+  total: number;
+  anomalies: number;
+  avgChiSquared: number;
+  avgEntropy: number;
+}
+
+export interface ChartAnomaly {
+  generatedAt: string;
+  chiSquared: number;
+  entropy: number;
+}
+
+export interface ChartData {
+  daily: ChartDaily[];
+  anomalies: ChartAnomaly[];
+}
+
 export const fetchStats = () => api.get<Stats>('/generations/stats').then((r) => r.data);
+
+export const fetchChartData = () => api.get<ChartData>('/generations/chart').then((r) => r.data);

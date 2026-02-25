@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getLatestGeneration, getGenerations, getStats } from '../services/generator';
+import { getLatestGeneration, getGenerations, getStats, getChartData } from '../services/generator';
 
 const router = Router();
 
@@ -23,6 +23,16 @@ router.get('/history', async (req, res) => {
   } catch (error) {
     console.error('Error fetching history:', error);
     res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+router.get('/chart', async (_req, res) => {
+  try {
+    const data = await getChartData();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching chart data:', error);
+    res.status(500).json({ error: 'Failed to fetch chart data' });
   }
 });
 
