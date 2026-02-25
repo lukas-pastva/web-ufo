@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchCurrent, fetchHistory, fetchStats } from './api/client';
 import type { Generation, Stats } from './api/client';
 import './styles/App.css';
+
+type SortField = 'generatedAt' | 'entropy' | 'chiSquared' | 'anomaly';
+type SortDir = 'asc' | 'desc';
 
 function App() {
   const [current, setCurrent] = useState<Generation | null>(null);
@@ -9,6 +12,9 @@ function App() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(true);
+  const [anomalyOnly, setAnomalyOnly] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('generatedAt');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
 
   const loadData = useCallback(async () => {
     try {
@@ -55,6 +61,41 @@ function App() {
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB') + ' ' + formatTime(iso);
   };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir(field === 'generatedAt' ? 'desc' : 'desc');
+    }
+  };
+
+  const sortIndicator = (field: SortField) =>
+    sortField === field ? (sortDir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
+
+  const filteredHistory = useMemo(() => {
+    let data = anomalyOnly ? history.filter((g) => g.anomaly) : [...history];
+    data.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case 'generatedAt':
+          cmp = new Date(a.generatedAt).getTime() - new Date(b.generatedAt).getTime();
+          break;
+        case 'entropy':
+          cmp = (a.entropy ?? 0) - (b.entropy ?? 0);
+          break;
+        case 'chiSquared':
+          cmp = (a.chiSquared ?? 0) - (b.chiSquared ?? 0);
+          break;
+        case 'anomaly':
+          cmp = Number(a.anomaly) - Number(b.anomaly);
+          break;
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  }, [history, anomalyOnly, sortField, sortDir]);
 
   if (loading) {
     return (
@@ -158,25 +199,50 @@ function App() {
       )}
 
       <section className="history-section">
-        <h2>Signal History</h2>
+        <div className="history-header">
+          <h2>Signal History</h2>
+          <div className="history-controls">
+            <label className="anomaly-toggle">
+              <input
+                type="checkbox"
+                checked={anomalyOnly}
+                onChange={(e) => setAnomalyOnly(e.target.checked)}
+              />
+              <span className="toggle-switch" />
+              <span className="toggle-label">Anomalies only</span>
+            </label>
+          </div>
+        </div>
         {history.length === 0 ? (
           <div className="history-table-wrap">
             <div className="history-empty">No signals generated yet. The first signal will appear within 60 seconds.</div>
+          </div>
+        ) : filteredHistory.length === 0 ? (
+          <div className="history-table-wrap">
+            <div className="history-empty">No anomalies detected in the current dataset.</div>
           </div>
         ) : (
           <div className="history-table-wrap">
             <table className="history-table">
               <thead>
                 <tr>
-                  <th>Time</th>
+                  <th className="sortable-th" onClick={() => handleSort('generatedAt')}>
+                    Time{sortIndicator('generatedAt')}
+                  </th>
                   <th>Random String</th>
-                  <th>Entropy</th>
-                  <th>Chi²</th>
-                  <th>Status</th>
+                  <th className="sortable-th" onClick={() => handleSort('entropy')}>
+                    Entropy{sortIndicator('entropy')}
+                  </th>
+                  <th className="sortable-th" onClick={() => handleSort('chiSquared')}>
+                    Chi²{sortIndicator('chiSquared')}
+                  </th>
+                  <th className="sortable-th" onClick={() => handleSort('anomaly')}>
+                    Status{sortIndicator('anomaly')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {history.map((gen) => (
+                {filteredHistory.map((gen) => (
                   <tr key={gen.id} className={gen.anomaly ? 'anomaly-row' : ''}>
                     <td className="time-col">{formatDate(gen.generatedAt)}</td>
                     <td className="string-col">{gen.randomString}</td>
